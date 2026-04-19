@@ -1,0 +1,77 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: mimir
+  namespace: {{ .Release.Namespace }}
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  uid: "mimir"
+  datasource:
+    name: mimir
+    type: prometheus
+    access: proxy
+    editable: true
+    isDefault: true
+    url: http://mimir/prometheus
+    jsonData:
+      manageAlerts: true
+      maxLines: 1000
+      prometheusType: Mimir
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: loki
+  namespace: {{ .Release.Namespace }}
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  uid: "loki"
+  datasource:
+    name: loki
+    type: loki
+    access: proxy
+    editable: true
+    url: http://loki:3100
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        - datasourceUid: tempo
+          matcherRegex: '"trace_id":"(.+?)"'
+          name: TraceID
+          url: "$${__value.raw}"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: tempo
+  namespace: {{ .Release.Namespace }}
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  uid: "tempo"
+  datasource:
+    name: tempo
+    type: tempo
+    access: proxy
+    editable: true
+    url: http://tempo:3100
+    jsonData:
+      httpMethod: GET
+      tracesToLogs:
+        datasourceUid: loki
+      tracesToLogsV2:
+        datasourceUid: loki
+      tracesToMetrics:
+        datasourceUid: mimir
+      serviceMap:
+        datasourceUid: mimir
+      nodeGraph:
+        enabled: true
+      lokiSearch:
+        datasourceUid: loki

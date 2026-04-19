@@ -1,0 +1,12 @@
+apiVersion: v2
+name: grafana
+description: A Helm chart for Grafana
+type: application
+version: 0.1.0
+appVersion: "11.4.0"
+keywords:
+  - grafana
+  - service
+maintainers:
+  - name: Sushan Kunwar
+    email: sushankunwar01@gmail.com

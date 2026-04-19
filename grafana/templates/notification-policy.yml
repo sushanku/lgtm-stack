@@ -1,0 +1,46 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: alerting-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  
+  # Root policy configuration
+  route:
+    receiver: "email"  # Default fallback receiver
+    group_by:
+      - alertname
+      - grafana_folder
+    
+    # Set timing parameters
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 1h
+    
+    # Define child routes
+    routes:
+      # Critical severity route to PagerDuty
+      - receiver: "pagerduty"
+        object_matchers:
+          - - severity
+            - =
+            - critical
+        continue: true  # Continue evaluation to allow additional matching
+
+      # Warning severity routes - separate entries for Email and Slack
+      - receiver: "email"
+        object_matchers:
+          - - severity
+            - =
+            - warning
+        continue: true  # Continue evaluation to allow additional matching
+        
+      - receiver: "slack"
+        object_matchers:
+          - - severity
+            - =
+            - warning
+        continue: true  # Continue evaluation to allow additional matching

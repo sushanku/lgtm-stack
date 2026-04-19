@@ -1,0 +1,43 @@
+# Production environment configuration
+grafana:
+  deployment:
+    image:
+      tag: 11.4.0  # Pinned version for production stability
+      pullPolicy: Always  # Ensure we always pull the correct image
+    
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+  
+
+  # PVC Management
+  persistence:
+    claimName: grafana-pvc-production
+    size: 20Gi
+    resources:
+      requests:
+        storage: 20Gi  
+      limits:
+        storage: 20Gi
+  
+  # Enable SMTP for production alerts
+  smtp:
+    enabled: false
+
+externalSecret:
+    data:
+      adminUser:
+        remoteRef: /production/GF_SECURITY_ADMIN_USER
+      adminPassword:
+        remoteRef: /production/GF_SECURITY_ADMIN_PASSWORD  
+
+  config:
+    log:
+      level: "warn"
+  
+  service:
+    type: ClusterIP

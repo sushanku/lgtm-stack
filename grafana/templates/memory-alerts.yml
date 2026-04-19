@@ -1,0 +1,68 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: memory-resource-alerts
+  namespace: {{ .Release.Namespace }}
+spec:
+  folderRef: alerts
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  interval: 30s
+  rules:
+    # Warning level alert (Memory > 65%) - Email and Slack via notification policy
+    - uid: memory-usage-warning
+      title: Memory Usage Warning
+      condition: A
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: mimir
+          model:
+            editorMode: code
+            expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 65
+            instant: true
+            intervalMs: 1000
+            legendFormat: '{{ "{{ instance }}" }} Memory Usage'
+            maxDataPoints: 43200
+            range: false
+            refId: A
+      noDataState: OK
+      execErrState: Error
+      for: 5m
+      annotations:
+        summary: "Memory usage on {{ "{{ $labels.instance }}" }} exceeds 65%"
+        description: "Memory usage on {{ "{{ $labels.instance }}" }} has been above 65% for more than 3 minute. Current value: {{ "{{ $value }}" }}%"
+      labels:
+        severity: warning
+    
+    # Critical level alert (Memory > 85%) - PagerDuty via notification policy
+    - uid: memory-usage-critical
+      title: Memory Usage Critical
+      condition: A
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: mimir
+          model:
+            editorMode: code
+            expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+            instant: true
+            intervalMs: 1000
+            legendFormat: '{{ "{{ instance }}" }} Memory Usage'
+            maxDataPoints: 43200
+            range: false
+            refId: A
+      noDataState: OK
+      execErrState: Error
+      for: 10m
+      annotations:
+        summary: "CRITICAL: Memory usage on {{ "{{ $labels.instance }}" }} exceeds 85%"
+        description: "Memory usage on {{ "{{ $labels.instance }}" }} has been above 85% for more than 10 minutes. Current value: {{ "{{ $value }}" }}%"
+      labels:
+        severity: critical

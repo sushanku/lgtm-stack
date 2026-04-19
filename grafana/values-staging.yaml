@@ -1,0 +1,41 @@
+# Staging environment configuration
+grafana:
+  deployment:
+    image:
+      tag: 11.4.0  # Using stable tag for staging
+    
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  
+  # PVC Management
+  persistence:
+    claimName: grafana-pvc-staging
+    size: 20Gi
+    resources:
+      requests:
+        storage: 20Gi  
+      limits:
+        storage: 20Gi
+  
+  # Enable SMTP for staging with company domain
+  smtp:
+    enabled: false
+
+externalSecret:
+    data:
+      adminUser:
+        remoteRef: /staging/GF_SECURITY_ADMIN_USER
+      adminPassword:
+        remoteRef: /staging/GF_SECURITY_ADMIN_PASSWORD
+
+  config:
+    log:
+      level: "info"
+  
+  service:
+    type: ClusterIP

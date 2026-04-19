@@ -1,0 +1,68 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: cpu-resource-alerts
+  namespace: {{ .Release.Namespace }}
+spec:
+  folderRef: alerts
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  interval: 30s
+  rules:
+    # Warning level alert (CPU > 65%) - Email and Slack via notification policy
+    - uid: cpu-usage-warning
+      title: CPU Usage Warning
+      condition: A
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: mimir
+          model:
+            editorMode: code
+            expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 75
+            instant: true
+            intervalMs: 1000
+            legendFormat: '{{ "{{ instance }}" }} CPU Usage'
+            maxDataPoints: 43200
+            range: false
+            refId: A
+      noDataState: OK
+      execErrState: Error
+      for: 5m
+      annotations:
+        summary: "CPU usage on {{ "{{ $labels.instance }}" }} exceeds 65%"
+        description: "CPU usage on {{ "{{ $labels.instance }}" }} has been above 65% for more than 3 minutes. Current value: {{ "{{ $value }}" }}%"
+      labels:
+        severity: warning
+
+    # Critical level alert (CPU > 85%) - PagerDuty via notification policy
+    - uid: cpu-usage-critical
+      title: CPU Usage Critical
+      condition: A
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 600
+            to: 0
+          datasourceUid: mimir
+          model:
+            editorMode: code
+            expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+            instant: true
+            intervalMs: 1000
+            legendFormat: '{{ "{{ instance }}" }} CPU Usage'
+            maxDataPoints: 43200
+            range: false
+            refId: A
+      noDataState: OK
+      execErrState: Error
+      for: 10m
+      annotations:
+        summary: "CRITICAL: CPU usage on {{ "{{ $labels.instance }}" }} exceeds 85%"
+        description: "CPU usage on {{ "{{ $labels.instance }}" }} has been above 85% for more than 10 minutes. Current value: {{ "{{ $value }}" }}%"
+      labels:
+        severity: critical

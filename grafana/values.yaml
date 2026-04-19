@@ -1,0 +1,26 @@
+# Grafana configuration - default values
+grafana:
+  name: grafana
+  labels:
+    dashboards: "grafana"
+    app: grafana
+  
+  # Deployment configuration
+  deployment:
+    image:
+      repository: docker.io/grafana/grafana
+      tag: 11.4.0
+      pullPolicy: IfNotPresent
+  
+  # Grafana config
+  config:
+    log:
+      mode: "console"
+      level: "info"
+    auth:
+      disableLoginForm: "false"
+    
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 3000

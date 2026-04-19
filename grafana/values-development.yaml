@@ -1,0 +1,47 @@
+# Development environment configuration
+domain:
+  monitoring_domain: http://localhost:3000
+
+grafana:
+  deployment:
+    image:
+      tag: 12.0.0  # Using stable tag for development
+    
+    resources:
+      requests:
+        cpu: 200m
+        memory: 500Mi
+      limits:
+        cpu: 2
+        memory: 4Gi
+  
+  # PVC Management
+  persistence:
+    claimName: grafana-pvc-development
+    size: 20Gi
+    resources:
+      requests:
+        storage: 20Gi  
+      limits:
+        storage: 20Gi
+  
+  # enable SMTP
+  smtp:
+    enabled: false
+
+externalSecret:
+  data:
+    adminUser:
+      remoteRef: "/development/GF_SECURITY_ADMIN_USER"
+    adminPassword:
+      remoteRef: "/development/GF_SECURITY_ADMIN_PASSWORD"
+
+  config:
+    log:
+      level: "debug" 
+
+  service:
+    type: clusterIP
+  
+  ingress:
+    enabled: false

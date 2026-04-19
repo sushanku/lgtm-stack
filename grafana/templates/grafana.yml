@@ -1,0 +1,49 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: {{ .Values.grafana.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- with .Values.grafana.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  deployment:
+    spec:
+      template:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsGroup: 65534
+            runAsUser: 65534
+            fsGroup: 65534
+          volumes:
+            - name: grafana-data
+              persistentVolumeClaim:
+                claimName: {{ .Values.grafana.persistence.claimName }}
+            - name: provisioning
+              emptyDir: {}
+          containers:
+            - name: grafana
+              image: {{ .Values.grafana.deployment.image.repository }}:{{ .Values.grafana.deployment.image.tag }}
+              imagePullPolicy: {{ .Values.grafana.deployment.image.pullPolicy }}
+              securityContext:
+                allowPrivilegeEscalation: false
+                privileged: false
+                readOnlyRootFilesystem: true
+                seccompProfile:
+                  type: RuntimeDefault
+                capabilities:
+                  drop:
+                    - ALL
+              resources:
+                {{- toYaml .Values.grafana.deployment.resources | nindent 16 }}
+              volumeMounts:
+                - name: provisioning
+                  mountPath: /etc/grafana/provisioning
+                - name: grafana-data
+                  mountPath: /var/lib/grafana
+  config:
+    security:
+      admin_user: root
+      admin_password: secret
