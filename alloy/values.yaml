@@ -1,0 +1,25 @@
+nameOverride: "alloy"
+replicaCount: 1
+
+image:
+  repository: grafana/alloy
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  annotations: {}
+
+tolerations:
+  - operator: "Exists"
+    effect: "NoSchedule"
+
+# Service configuration
+service:
+  name: alloy
+  protocol: TCP
+  type: ClusterIP
+  port: 12345
+  targetPort: 12345
+  loki_name: loki-api
+  loki_port: 3100
+  loki_targetPort: 3100

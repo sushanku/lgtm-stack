@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ .Values.nameOverride | default "alloy" }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      name: grafana-alloy
+  template:
+    metadata:
+      labels:
+        name: grafana-alloy
+    spec:
+      serviceAccountName: grafana-alloy
+      automountServiceAccountToken: true
+      tolerations: {{- toYaml .Values.tolerations | nindent 8 }}
+      containers:
+      - name: alloy
+        image: grafana/alloy:latest
+        args:
+        - run
+        - /etc/alloy/custom
+        - --server.http.listen-addr=0.0.0.0:12345
+        - --storage.path=/tmp/alloy
+        volumeMounts:
+        - name: loki-config
+          mountPath: /etc/alloy/custom/loki.alloy
+          subPath: loki.alloy
+          readOnly: true
+        - name: prometheus-config
+          mountPath: /etc/alloy/custom/prometheus.alloy
+          subPath: prometheus.alloy
+          readOnly: true
+        ports:
+        - containerPort: 12345
+          name: http-metrics
+        - containerPort: 3100  # Fixed: Added port 3100 for loki API
+          name: loki-api
+      volumes:
+      - name: loki-config
+        configMap:
+          name: grafana-alloy-loki-config
+      - name: prometheus-config
+        configMap:
+          name: grafana-alloy-prometheus-config
