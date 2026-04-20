@@ -1,0 +1,13 @@
+apiVersion: v2
+name: loki
+description: A Helm chart for Grafana Loki
+type: application
+version: 0.1.0
+appVersion: "3.2.1"
+maintainers:
+  - name: User
+keywords:
+  - loki
+  - logging
+  - monitoring
+  - grafana

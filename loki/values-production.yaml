@@ -1,0 +1,40 @@
+# Higher resources for production
+resources:
+  limits:
+    cpu: 2
+    memory: 4Gi
+  requests:
+    cpu: 500m
+    memory: 2Gi
+
+# Larger storage for production
+persistence:
+  storage:
+    size: 100Gi
+  wal:
+    size: 40Gi
+
+statefulSet:
+  # More robust security settings for production
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+
+config:
+  filesystem:
+    directory: /data/chunks
+    
+    tsdb_shipper:
+      # Longer cache TTL for production to improve query performance
+      cache_ttl: 1440h  # 60 days
+
+  compactor:
+    # More aggressive compaction for production
+    compaction_interval: 15m
+    retention_delete_worker_count: 200
+
+  limits_config:
+    # Longer retention in production
+    reject_old_samples_max_age: 720h  # 30 days

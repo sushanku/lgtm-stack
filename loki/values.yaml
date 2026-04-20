@@ -1,0 +1,130 @@
+# Default values for loki chart
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: grafana/loki
+  tag: "3.2.1"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "loki-sa"
+
+service:
+  type: ClusterIP
+  port: 3100
+  protocol: TCP
+  name: http-metrics
+  targetPort: http-metrics
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3100"
+
+statefulSet:
+  revisionHistoryLimit: 1
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
+  automountServiceAccountToken: true
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+        - ALL
+  terminationGracePeriodSeconds: 60
+  template:
+    annotations:
+      prometheus.io/port: http-metrics
+      prometheus.io/scrape: "true"
+      filter.by.port.name: "true"
+
+livenessProbe:
+  httpGet:
+    path: /ready
+    port: http-metrics
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http-metrics
+  initialDelaySeconds: 20
+  periodSeconds: 10
+
+config:
+  auth_enabled: false
+  
+  compactor:
+    working_directory: /data/retention
+    compaction_interval: 10m
+    retention_enabled: true
+    retention_delete_delay: 2h
+    retention_delete_worker_count: 150
+    delete_request_store: s3
+  
+  ingester:
+    chunk_block_size: 262144
+    chunk_idle_period: 3m
+    chunk_retain_period: 1m
+    lifecycler:
+      ring:
+        kvstore:
+          store: inmemory
+        replication_factor: 1
+  
+  limits_config:
+    reject_old_samples: true
+    reject_old_samples_max_age: 168h
+    allow_structured_metadata: false
+  
+  schema_config:
+    configs:
+      from: "2023-07-01"
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+  
+  server:
+    http_listen_port: 3100
+  
+  common:
+    path_prefix: /data
+    replication_factor: 1
+  
+  storage_config:    
+    tsdb_shipper:
+      active_index_directory: /loki/index
+      cache_location: /loki/index_cache
+      cache_ttl: 720h
+  
+  table_manager:
+    retention_deletes_enabled: true
+  
+  ruler:
+    storage:
+      type: local
+      local:
+        directory: /tmp/rules
+    rule_path: /tmp/scratch
+    alertmanager_url: http://localhost
+    ring:
+      kvstore:
+        store: inmemory
+    enable_api: true

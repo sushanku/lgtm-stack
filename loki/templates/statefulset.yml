@@ -1,0 +1,86 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "loki.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "loki.labels" . | nindent 4 }}
+spec:
+  revisionHistoryLimit: {{ .Values.statefulSet.revisionHistoryLimit }}
+  podManagementPolicy: {{ .Values.statefulSet.podManagementPolicy }}
+  selector:
+    matchLabels:
+      {{- include "loki.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "loki.fullname" . }}-headless
+  updateStrategy:
+    type: {{ .Values.statefulSet.updateStrategy.type }}
+  template:
+    metadata:
+      labels:
+        {{- include "loki.selectorLabels" . | nindent 8 }}
+      {{- with .Values.statefulSet.template.annotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: loki-sa
+      automountServiceAccountToken: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "-config.file=/etc/loki/loki.yaml"
+          volumeMounts:
+            - name: config
+              mountPath: "/etc/loki"
+            - name: storage
+              mountPath: "/data"
+              subPath: {{ .Values.persistence.storage.subPath }}
+            - name: wal
+              mountPath: "/wal"
+          ports:
+            - name: {{ .Values.service.targetPort }}
+              containerPort: {{ .Values.config.server.http_listen_port }}
+              protocol: {{ .Values.service.protocol }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.statefulSet.containerSecurityContext | nindent 12 }}
+      terminationGracePeriodSeconds: {{ .Values.statefulSet.terminationGracePeriodSeconds }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "loki.fullname" . }}
+            defaultMode: 0755
+  volumeClaimTemplates:
+    - metadata:
+        name: storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- if .Values.persistence.storage.storageClass }}
+        storageClassName: {{ .Values.persistence.storage.storageClass }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.storage.size }}
+    - metadata:
+        name: wal
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- if .Values.persistence.wal.storageClass }}
+        storageClassName: {{ .Values.persistence.wal.storageClass }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.wal.size }}

@@ -1,0 +1,27 @@
+# Development environment configuration
+resources:
+  limits:
+    cpu: 1
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 500Mi
+
+persistence:
+  storage:
+    size: 50Gi
+  wal:
+    size: 20Gi
+
+config:
+  filesystem:
+    directory: /data/chunks
+
+  compactor:
+    # Shorter interval for development
+    compaction_interval: 5m
+    retention_delete_worker_count: 50
+
+  limits_config:
+    # Lower retention in development
+    reject_old_samples_max_age: 24h
