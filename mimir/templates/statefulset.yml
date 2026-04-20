@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mimir
+  namespace: {{ .Release.Namespace }}
+spec:
+  serviceName: mimir
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: mimir
+  template:
+    metadata:
+      labels:
+        app: mimir
+    spec:
+      serviceAccountName: mimir-sa
+      automountServiceAccountToken: true
+      containers:
+        - name: mimir
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - -config.file=/etc/mimir/mimir.yaml
+            - -target=all
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: grpc
+              containerPort: 9095
+            - name: memberlist
+              containerPort: 7946
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/mimir
+            - name: data
+              mountPath: /data
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: mimir-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ .Values.storage.size }}

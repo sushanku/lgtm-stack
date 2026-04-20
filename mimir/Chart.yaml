@@ -1,0 +1,7 @@
+# Chart.yaml
+apiVersion: v2
+name: mimir
+description: A Helm chart for Grafana Mimir
+type: application
+version: 0.1.0
+appVersion: "latest"

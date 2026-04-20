@@ -1,0 +1,21 @@
+replicaCount: 1
+
+image:
+  repository: grafana/mimir
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  annotations: {}
+
+service:
+  type: ClusterIP
+  ports:
+    http: 80
+    grpc: 9095
+
+config:
+  region: us-east-1
+  tsdbRetention: 168h
+  tsdbBlockRange: "2h"
+  s3Endpoint: s3.amazonaws.com

@@ -1,0 +1,10 @@
+resources:
+  requests:
+    memory: 8Gi
+    cpu: 4
+  limits:
+    memory: 16Gi
+    cpu: 8
+
+storage:
+  size: 100Gi
