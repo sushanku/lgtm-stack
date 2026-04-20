@@ -1,0 +1,20 @@
+# values-development.yaml
+replicaCount: 1
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 512Mi
+
+persistence:
+  size: 20Gi
+
+config:
+  compactor:
+    compaction:
+      blockRetention: 24h
+  querier:
+    maxConcurrentQueries: 50

@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tempo.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "tempo.labels" . | nindent 4 }}
+data:
+  tempo.yaml: |
+    target: all
+    multitenancy_enabled: false
+    # OpenTelemetry Receiver Configuration
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+            http:
+              endpoint: 0.0.0.0:4318
+
+    # Storage Configuration
+    storage:
+      trace:
+        backend: local
+        block:
+          version: vParquet4
+          v2_encoding: zstd
+        local:
+          path: /var/tempo/traces
+        wal:
+          path: /var/tempo/wal
+          v2_encoding: snappy
+          search_encoding: snappy
+    
+    # Enables result streaming from Tempo (to Grafana) via HTTP.
+    stream_over_http_enabled: true
+
+    # Server Configuration
+    server:
+      http_listen_port: 3100
+
+    # Querying and Frontend
+    query_frontend: {}
+    querier:
+      max_concurrent_queries: 20
+      frontend_worker:
+        frontend_address: 0.0.0.0:9095
+
+    # Optional: Metrics Generation
+    metrics_generator:
+      storage:
+        path: /var/tempo/generator/wal
+        remote_write:
+          - url:  http://mimir/api/v1/push
+            send_exemplars: true
+      traces_storage:
+        path: /tmp/tempo/generator/traces
+      processor:
+        span_metrics:
+          dimensions:
+            - http.method
+            - http.target
+            - http.status_code
+            - service.version
+        service_graphs:
+          dimensions:
+            - http.method
+            - http.target
+            - http.status_code
+            - service.version
+          enable_virtual_node_label: true
+          enable_client_server_prefix: true
+
+    # Compaction and Retention
+    compactor:
+      compaction:
+        block_retention: 24h0m0s
+
+    # Cluster Configuration
+    memberlist:
+      bind_addr:
+        - '::'
+      abort_if_cluster_join_fails: false
+
+    # Global override configuration.
+    overrides:
+      defaults:
+        metrics_generator:
+          processors: [service-graphs, span-metrics, local-blocks] # enables metrics generator
+          generate_native_histograms: both

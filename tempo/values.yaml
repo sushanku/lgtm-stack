@@ -1,0 +1,42 @@
+# values.yaml
+replicaCount: 1
+
+image:
+  repository: docker.io/grafana/tempo
+  tag: 2.6.1
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  automountServiceAccountToken: false
+  annotations: {}
+  labels:
+    app.kubernetes.io/name: tempo
+
+service:
+  type: ClusterIP
+  annotations: {}
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+    - name: prom-metrics
+      port: 3100
+      targetPort: 3100
+      protocol: TCP
+
+persistence:
+  storageClass: ""
+  size: 10Gi
+  annotations: {}
+
+podAnnotations:
+  prometheus.io/port: "3100"
+  prometheus.io/scrape: "true"

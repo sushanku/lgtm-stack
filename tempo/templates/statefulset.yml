@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "tempo.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "tempo.labels" . | nindent 4 }}
+  {{- with .Values.podAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "tempo.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "tempo.fullname" . }}-headless
+  template:
+    metadata:
+      labels:
+        {{- include "tempo.selectorLabels" . | nindent 8 }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "tempo.fullname" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      containers:
+      - args:
+        - -config.file=/conf/tempo.yaml
+        - -mem-ballast-size-mbs=1024
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        name: {{ .Chart.Name }}
+        ports:
+        {{- range .Values.service.ports }}
+        - containerPort: {{ .targetPort }}
+          name: {{ .name }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        volumeMounts:
+        - mountPath: /conf
+          name: tempo-conf
+        - name: tempo-storage
+          mountPath: /var/tempo/wal
+          subPath: wal
+        - name: tempo-storage
+          mountPath: /var/tempo/traces
+          subPath: traces
+        - name: tempo-storage
+          mountPath: /var/tempo/generator/wal
+          subPath: generator
+        - name: tmp
+          mountPath: /tmp
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
+          capabilities:
+            drop:
+              - ALL
+      volumes:
+        - name: tempo-storage
+          emptyDir:
+            sizeLimit: "10Gi"
+        - configMap:
+            name: tempo
+          name: tempo-conf
+        - name: tmp
+          emptyDir: {}
