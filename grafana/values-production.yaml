@@ -28,13 +28,6 @@ grafana:
   smtp:
     enabled: false
 
-externalSecret:
-    data:
-      adminUser:
-        remoteRef: /production/GF_SECURITY_ADMIN_USER
-      adminPassword:
-        remoteRef: /production/GF_SECURITY_ADMIN_PASSWORD  
-
   config:
     log:
       level: "warn"
