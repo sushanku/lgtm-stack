@@ -69,6 +69,15 @@ spec:
         datasourceUid: loki
       tracesToMetrics:
         datasourceUid: mimir
+        tags:
+          - key: service.name
+            value: service
+          - key: job
+        queries:
+          - name: Request rate
+            query: sum(rate(traces_spanmetrics_calls_total{$__tags}[5m]))
+          - name: Request duration p99
+            query: histogram_quantile(0.99, sum(rate(traces_spanmetrics_duration_milliseconds_bucket{$__tags}[5m])) by (le))
       serviceMap:
         datasourceUid: mimir
       nodeGraph:
