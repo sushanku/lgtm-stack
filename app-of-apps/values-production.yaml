@@ -1,0 +1,25 @@
+environment: production
+
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+  source:
+    repoURL: git@github.com:sushanku/lgtm-stack.git
+    targetRevision: main
+
+applications:
+  - name: grafana
+    valueFiles:
+      - values-production.yaml
+  - name: loki
+    valueFiles:
+      - values-production.yaml
+  - name: mimir
+    valueFiles:
+      - values-production.yaml
+  - name: opentelemetry
+    valueFiles:
+      - values-production.yaml
+  - name: tempo
+    valueFiles:
+      - values-production.yaml

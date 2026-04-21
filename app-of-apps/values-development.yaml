@@ -1,0 +1,25 @@
+environment: development
+
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+  source:
+    repoURL: git@github.com:sushanku/lgtm-stack.git
+    targetRevision: main
+
+applications:
+  - name: alloy
+    valueFiles:
+      - values-development.yaml
+  - name: grafana
+    valueFiles:
+      - values-development.yaml
+  - name: loki
+    valueFiles:
+      - values-development.yaml
+  - name: mimir
+    valueFiles:
+      - values-development.yaml
+  - name: tempo
+    valueFiles:
+      - values-development.yaml

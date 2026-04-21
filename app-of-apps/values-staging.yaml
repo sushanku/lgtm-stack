@@ -1,0 +1,25 @@
+environment: staging
+
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+  source:
+    repoURL: git@github.com:sushanku/lgtm-stack.git
+    targetRevision: main
+
+applications:
+  - name: grafana
+    valueFiles:
+      - values-staging.yaml
+  - name: loki
+    valueFiles:
+      - values-staging.yaml
+  - name: mimir
+    valueFiles:
+      - values-staging.yaml
+  - name: opentelemetry
+    valueFiles:
+      - values-staging.yaml
+  - name: tempo
+    valueFiles:
+      - values-staging.yaml

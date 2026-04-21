@@ -1,0 +1,42 @@
+{{- define "application" -}}
+{{- $root := . }}
+{{- range $application := .Values.applications }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $application.name }}-{{ $root.Values.environment }}
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ default "default" $application.project }}
+  destination:
+    server: {{ $root.Values.spec.destination.server }}
+    namespace: monitoring
+  source:
+    repoURL: {{ $root.Values.spec.source.repoURL }}
+    targetRevision: {{ $root.Values.spec.source.targetRevision }}
+    path: {{ $application.name }}
+    {{- if $application.valueFiles }}
+    helm:
+      valueFiles:
+      {{- range $vf := $application.valueFiles }}
+        - {{ $vf }}
+      {{- end }}
+    {{- else }}
+    helm: {}
+    {{- end }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  {{- if eq $application.name "opentelemetry" }}
+  ignoreDifferences:
+  - group: opentelemetry.io
+    kind: OpenTelemetryCollector
+    jsonPointers:
+    - /spec/config
+  {{- end }}
+{{- end }}
+{{- end }}
