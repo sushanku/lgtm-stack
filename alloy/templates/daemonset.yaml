@@ -12,6 +12,7 @@ spec:
       labels:
         name: grafana-alloy
     spec:
+      hostPID: true                          # required for Beyla eBPF
       serviceAccountName: grafana-alloy
       automountServiceAccountToken: true
       tolerations: {{- toYaml .Values.tolerations | nindent 8 }}
@@ -23,6 +24,8 @@ spec:
         - /etc/alloy/custom
         - --server.http.listen-addr=0.0.0.0:12345
         - --storage.path=/tmp/alloy
+        securityContext:                     # required for Beyla eBPF
+          privileged: true
         volumeMounts:
         - name: loki-config
           mountPath: /etc/alloy/custom/loki.alloy
@@ -32,10 +35,14 @@ spec:
           mountPath: /etc/alloy/custom/prometheus.alloy
           subPath: prometheus.alloy
           readOnly: true
+        - name: beyla-config
+          mountPath: /etc/alloy/custom/beyla.alloy
+          subPath: beyla.alloy
+          readOnly: true
         ports:
         - containerPort: 12345
           name: http-metrics
-        - containerPort: 3100  # Fixed: Added port 3100 for loki API
+        - containerPort: 3100
           name: loki-api
       volumes:
       - name: loki-config
@@ -44,3 +51,6 @@ spec:
       - name: prometheus-config
         configMap:
           name: grafana-alloy-prometheus-config
+      - name: beyla-config
+        configMap:
+          name: grafana-alloy-beyla-config

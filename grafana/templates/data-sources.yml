@@ -75,9 +75,11 @@ spec:
           - key: job
         queries:
           - name: Request rate
-            query: sum(rate(traces_spanmetrics_calls_total{$__tags}[5m]))
+            query: sum(rate(http_server_request_duration_seconds_count{$__tags}[5m]))
           - name: Request duration p99
-            query: histogram_quantile(0.99, sum(rate(traces_spanmetrics_duration_milliseconds_bucket{$__tags}[5m])) by (le))
+            query: histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{$__tags}[5m])) by (le))
+          - name: Request duration p95
+            query: histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{$__tags}[5m])) by (le))
       serviceMap:
         datasourceUid: mimir
       nodeGraph:
