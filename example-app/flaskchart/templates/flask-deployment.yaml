@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "flaskchart.fullname" . }}-monitor
+  labels:
+    app: flask-monitor
+  {{- include "flaskchart.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.monitor.replicas }}
+  selector:
+    matchLabels:
+      app: flask-monitor
+      role: frontend
+  template:
+    metadata:
+      labels:
+        app: flask-monitor
+        role: frontend
+    spec:
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #         - matchExpressions:
+      #             - key: "node-role/cpu-intensive"
+      #               operator: Exists
+      # tolerations:
+      # - key: "CpuIntensiveOnly"
+      #   operator: "Equal"
+      #   value: "true"
+      #   effect: "NoSchedule"
+      containers:
+      - env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        envFrom:
+        - configMapRef:
+            name: {{ include "flaskchart.fullname" . }}-config
+        image: {{ .Values.monitor.flask.image.repository }}:{{ .Values.monitor.flask.image.tag
+          | default .Chart.AppVersion }}
+        name: flask
+        ports:
+        - containerPort: 5000
+        resources: {{- toYaml .Values.monitor.flask.resources | nindent 10 }}
+      

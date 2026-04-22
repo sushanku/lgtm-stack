@@ -1,0 +1,31 @@
+config:
+  dbEngine: postgresql
+  dbHost: postgres
+  dbName: monitor_db
+  dbPass: monitor01
+  dbPort: "5432"
+  dbUsername: sushanku
+  debug: "False"
+  secretKey: S3cr3t_K#Key
+kubernetesClusterDomain: cluster.local
+monitor:
+  flask:
+    image:
+      repository: sushanku/flask-monitor-app-arm64-v13
+      tag: latest
+    port:
+      containerPort: 5000
+    resources:
+      limits:
+        cpu: "1"
+        memory: 512Mi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+  replicas: 1
+service:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 5000
+  type: LoadBalancer

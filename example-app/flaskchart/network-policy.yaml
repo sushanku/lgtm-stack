@@ -1,0 +1,58 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: flask-egress-to-postgres-only
+  namespace: default
+spec:
+  endpointSelector:
+    matchLabels:
+      role: frontend
+  ingress:
+    - fromEntities:
+        - world
+        - cluster
+      toPorts:
+        - ports:
+            - port: "5000"
+              protocol: TCP
+          rules:
+            http:
+              - method: "GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS"
+                path: "/.*"
+  egress:
+    # Allow DNS
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+          rules:
+            dns:
+              - matchPattern: "*"
+    # Allow PostgreSQL
+    - toEndpoints:
+        - matchLabels:
+            role: backend
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    # Allow OpenTelemetry Collector
+    - toServices:
+        - k8sService:
+            serviceName: otel-collector
+            namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "4317"
+              protocol: TCP
+            - port: "4318"
+              protocol: TCP
+    # General cluster and world access
+    - toEntities:
+        - cluster
+    - toEntities:
+        - world

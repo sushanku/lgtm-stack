@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ include "postgreschart.fullname" . }}-monitorapp-pv-volume
+  labels:
+    type: local
+  {{- include "postgreschart.labels" . | nindent 4 }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 5Gi
+  hostPath:
+    path: /home/sushan/kubedata
+  storageClassName: manual

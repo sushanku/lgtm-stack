@@ -1,0 +1,27 @@
+kubernetesClusterDomain: cluster.local
+postgres:
+  ports:
+  - port: 5432
+    targetPort: 0
+  postgres:
+    image:
+      repository: postgres
+      tag: "12"
+    resources:
+      limits:
+        cpu: "1"
+        memory: 512Mi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+  replicas: 1
+  type: ClusterIP
+config:
+  pgdata: /var/lib/postgresql/data/pgdata
+  postgresDb: monitor_db
+  postgresPassword: monitor01
+  postgresUser: sushanku
+pvc:
+  postgresPvClaim:
+    storageClass: manual
+    storageRequest: 1Gi
