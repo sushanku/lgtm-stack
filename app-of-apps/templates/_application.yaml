@@ -13,11 +13,17 @@ spec:
   project: {{ default "default" $application.project }}
   destination:
     server: {{ $root.Values.spec.destination.server }}
-    namespace: monitoring
+    namespace: {{ default "monitoring" $application.namespace }}
   source:
+    {{- if $application.chart }}
+    repoURL: {{ required (printf "applications[%s].repoURL is required when chart is set" $application.name) $application.repoURL }}
+    chart: {{ $application.chart }}
+    targetRevision: {{ required (printf "applications[%s].targetRevision is required when chart is set (chart version)" $application.name) $application.targetRevision }}
+    {{- else }}
     repoURL: {{ $root.Values.spec.source.repoURL }}
     targetRevision: {{ $root.Values.spec.source.targetRevision }}
-    path: {{ $application.name }}
+    path: {{ default $application.name $application.path }}
+    {{- end }}
     {{- if $application.valueFiles }}
     helm:
       valueFiles:

@@ -8,6 +8,14 @@ spec:
     targetRevision: main
 
 applications:
+  - name: grafana-operator
+    namespace: monitoring
+    repoURL: https://grafana.github.io/helm-charts
+    chart: grafana-operator
+    targetRevision: 5.22.2
+  - name: alloy
+    valueFiles:
+      - values-production.yaml
   - name: grafana
     valueFiles:
       - values-production.yaml
@@ -17,9 +25,14 @@ applications:
   - name: mimir
     valueFiles:
       - values-production.yaml
-  - name: opentelemetry
-    valueFiles:
-      - values-production.yaml
   - name: tempo
     valueFiles:
       - values-production.yaml
+  - name: flaskapp
+    path: example-app/flaskchart
+    valueFiles:
+      - values.yaml
+  - name: postgres
+    path: example-app/postgreschart
+    valueFiles:
+      - values.yaml
