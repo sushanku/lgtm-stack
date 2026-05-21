@@ -39,6 +39,12 @@ spec:
                   mkdir -p /etc/grafana/provisioning/notifiers
                   mkdir -p /etc/grafana/provisioning/plugins
                   mkdir -p /etc/grafana/provisioning/alerting
+                  echo "Waiting for PostgreSQL DNS lookup..."
+                  until nslookup postgres.monitoring.svc.cluster.local; do
+                    echo "Postgres DNS not resolved yet. Sleeping 2 seconds..."
+                    sleep 2
+                  done
+                  echo "Postgres DNS is resolved! Proceeding..."
               volumeMounts:
                 - name: provisioning
                   mountPath: /etc/grafana/provisioning
